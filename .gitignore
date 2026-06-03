@@ -1,0 +1,8 @@
+writing_examples
+workspace
+template
+team
+*_repo
+*.zip
+.claude/*.json
+.claude/*.lock
