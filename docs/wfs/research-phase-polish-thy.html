@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>research-phase-polish-thy — Usage Guide</title>
+<style>
+  :root { --fg:#1b1f24; --muted:#5b6470; --accent:#2d6cdf; --line:#e3e7ec; --bg:#ffffff; --code:#f5f7fa; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:880px; margin:0 auto; padding:48px 24px 96px; }
+  h1 { font-size:2rem; margin:0 0 .2em; letter-spacing:-.01em; }
+  h2 { font-size:1.35rem; margin:2.2em 0 .6em; padding-bottom:.25em; border-bottom:1px solid var(--line); }
+  h3 { font-size:1.05rem; margin:1.6em 0 .4em; }
+  p, li { color:var(--fg); }
+  .lead { color:var(--muted); font-size:1.05rem; }
+  code { background:var(--code); padding:.12em .4em; border-radius:4px; font-size:.88em;
+         font-family:"SF Mono",Menlo,Consolas,monospace; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
+        overflow:auto; font-size:.85rem; line-height:1.5; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:1em 0; font-size:.92rem; }
+  th, td { text-align:left; padding:8px 12px; border:1px solid var(--line); vertical-align:top; }
+  th { background:var(--code); font-weight:600; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .meta { margin:1.2em 0; padding:14px 18px; background:var(--code); border-left:3px solid var(--accent);
+          border-radius:6px; font-size:.92rem; }
+  .meta code { background:#fff; }
+  ul { padding-left:1.3em; }
+  li { margin:.25em 0; }
+  .pill { display:inline-block; background:#eef3ff; color:var(--accent); border-radius:999px;
+          padding:.05em .6em; font-size:.78rem; font-weight:600; vertical-align:middle; }
+  footer { margin-top:3em; padding-top:1.2em; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>research-phase-polish-thy <span class="pill">Workflow</span></h1>
+<p class="lead">A reusable multi-agent workflow that audits and repairs a theory-heavy research
+paper end to end. Generalized from a real session that audited, repaired, and hardened an ICLR
+theory paper. Pass the target paper path as <code>args</code>.</p>
+
+<div class="meta">
+  <strong>Script:</strong> <code>.claude/workflows/research-phase-polish-thy.js</code><br>
+  <strong>Invoke:</strong> <code>Workflow({ name: 'research-phase-polish-thy', args: '/path/to/paper.tex' })</code>
+</div>
+
+<h2>What it does</h2>
+<p>Given a paper <code>.tex</code> (and, if present, its experiment result files), the workflow runs
+nine phases that mirror a rigorous human audit.</p>
+<ol>
+  <li><strong>Map</strong> the paper structure and build a <code>CANONICAL_FACTS</code> ledger of
+      verified numbers from the result JSONs. This ledger is the ground truth that every paper
+      number is checked against.</li>
+  <li><strong>Audit</strong> every theorem/lemma proof with an uncharitable adversarial checker in
+      parallel, plus a claim-evidence checker that verifies abstract/intro numbers against the
+      result files.</li>
+  <li><strong>Confirm gaps</strong> by adjudicating the deliberately harsh findings and dropping
+      false positives.</li>
+  <li><strong>Novelty</strong> check each contribution against prior art with web search, comparing
+      the <em>precise form</em> of the closest prior result so a near-miss does not hide a genuine
+      gap.</li>
+  <li><strong>Repair &rarr; Verify</strong> each genuine gap in a pipeline. Each gap gets a rigorous
+      repair or, if that is impossible, the strongest honestly-weakened statement, then an
+      adversarial verifier confirms the repair closes the gap without introducing a new one.</li>
+  <li><strong>Apply</strong> the verified repairs and citation additions through a single sequential
+      editor that recompiles and confirms a clean build.</li>
+  <li><strong>Consistency</strong> review the whole paper paragraph by paragraph, one auditor per
+      section, each writing findings to a shared team folder.</li>
+  <li><strong>Synthesize</strong> the per-section findings into one prioritized consistency report,
+      resolving every cross-section flag.</li>
+  <li>Apply the consolidated <code>BLOCKER</code>/<code>SHOULD-FIX</code> items through the single
+      editor and do a final compile.</li>
+</ol>
+
+<h2>Invocation and arguments</h2>
+<p>The simplest form passes the <code>.tex</code> path as a string.</p>
+<pre><code>Workflow({ name: 'research-phase-polish-thy', args: '/home/me/paper/main.tex' })</code></pre>
+<p>For full control, pass an object. Only <code>tex</code> is required; the rest are inferred from it.</p>
+<pre><code>Workflow({
+  name: 'research-phase-polish-thy',
+  args: {
+    tex:     '/home/me/paper/main.tex',            // required
+    results: '/home/me/paper/experiments/results', // default: &lt;dir&gt;/experiments/results
+    team:    '/home/me/paper/team/review',         // default: &lt;dir&gt;/team/review
+    bib:     '/home/me/paper/main.bib'             // default: main.tex -&gt; main.bib
+  }
+})</code></pre>
+
+<table>
+  <tr><th>arg</th><th>meaning</th><th>default</th></tr>
+  <tr><td><code>tex</code></td><td>the paper source to audit</td><td>required</td></tr>
+  <tr><td><code>results</code></td><td>folder of experiment result JSONs used to build the canonical ledger</td><td><code>&lt;dir&gt;/experiments/results</code></td></tr>
+  <tr><td><code>team</code></td><td>folder where the canonical ledger, per-section findings, and the consistency report are written</td><td><code>&lt;dir&gt;/team/review</code></td></tr>
+  <tr><td><code>bib</code></td><td>bibliography file for citation additions</td><td><code>&lt;tex with .bib&gt;</code></td></tr>
+</table>
+
+<h2>Phases at a glance</h2>
+<table>
+  <tr><th>Phase</th><th>Agents</th><th>Output</th></tr>
+  <tr><td>Map</td><td>1 + 1 ledger</td><td>structure map, <code>CANONICAL_FACTS.md</code></td></tr>
+  <tr><td>Audit proofs and claims</td><td>one per theorem + claim-evidence (parallel)</td><td>findings with severities</td></tr>
+  <tr><td>Confirm gaps</td><td>1 adjudicator</td><td>genuine gaps only</td></tr>
+  <tr><td>Novelty preemption</td><td>one per contribution (parallel, web)</td><td>preempted vs defensible + citations</td></tr>
+  <tr><td>Repair</td><td>one per gap (pipeline)</td><td>insertable LaTeX + new assumptions + honesty note</td></tr>
+  <tr><td>Verify repairs</td><td>one per repair (pipeline)</td><td>closes / partial / fails + strongest honest version</td></tr>
+  <tr><td>Apply and compile</td><td>1 sequential editor</td><td>edited <code>.tex</code>, clean recompile</td></tr>
+  <tr><td>Consistency review</td><td>one per section (parallel)</td><td><code>findings_S*.md</code> in the team folder</td></tr>
+  <tr><td>Synthesize</td><td>1 synthesizer + 1 editor</td><td><code>CONSISTENCY_REPORT.md</code>, final clean compile</td></tr>
+</table>
+
+<h2>Design principles baked in</h2>
+<p>These are the lessons that make the workflow trustworthy rather than just busy.</p>
+<ul>
+  <li><strong>A canonical-facts ledger is the single source of truth.</strong> Numbers are checked
+      against the result files, not against the paper's own prose, so stale or aspirational figures
+      are caught.</li>
+  <li><strong>Adversarial audits are deliberately uncharitable, then adjudicated.</strong> Harsh
+      first, filtered second. This finds real gaps without acting on overstatements.</li>
+  <li><strong>Novelty checks compare the precise form of prior results.</strong> A claim can look
+      preempted yet hold a genuine gap, for example "ICL equals an InfoNCE step <em>with
+      negatives</em>" versus a prior "positive-pair similarity <em>without</em> negatives." The
+      workflow looks for exactly this.</li>
+  <li><strong>Every file edit funnels through one sequential editor.</strong> Parallel writes to a
+      single <code>.tex</code> would clash, so all application is serialized, and the editor always
+      recompiles to a clean build.</li>
+  <li><strong>Repairs prefer rigor, then honest weakening.</strong> If a gap cannot be closed
+      cleanly, the workflow states the strongest provable weaker claim rather than papering over
+      it.</li>
+  <li><strong>Everything is written to a team folder for traceability.</strong> The ledger,
+      per-section findings, and the consolidated report remain on disk as an audit trail.</li>
+</ul>
+
+<h2>Output</h2>
+<ul>
+  <li><strong>Return value:</strong> counts of audit findings, genuine gaps, adopted repairs, the
+      novelty status of each contribution, the path to the consistency report, and short summaries
+      of both apply steps.</li>
+  <li><strong>On disk in the <code>team</code> folder:</strong> <code>CANONICAL_FACTS.md</code>,
+      <code>findings_S1.md</code> &hellip; <code>findings_SN.md</code>,
+      <code>CONSISTENCY_REPORT.md</code>.</li>
+  <li>The <code>.tex</code> (and <code>.bib</code>) are edited in place and recompiled.</li>
+</ul>
+
+<h2>Examples</h2>
+<p>Audit a paper with the defaults.</p>
+<pre><code>Workflow({ name: 'research-phase-polish-thy', args: 'workspace/RWM/iclr2026.tex' })</code></pre>
+<p>Audit a paper whose results and bibliography live in non-default places.</p>
+<pre><code>Workflow({
+  name: 'research-phase-polish-thy',
+  args: {
+    tex: 'workspace/RWM/iclr2026.tex',
+    results: 'workspace/RWM/runs',
+    bib: 'workspace/RWM/refs.bib'
+  }
+})</code></pre>
+
+<h2>Customizing and extending</h2>
+<ul>
+  <li>The script is plain JavaScript at <code>.claude/workflows/research-phase-polish-thy.js</code>.
+      Edit it and re-invoke with
+      <code>Workflow({ scriptPath: '.claude/workflows/research-phase-polish-thy.js', args })</code>.</li>
+  <li>To run only part of the pipeline, comment out later phases and <code>return</code> early.</li>
+  <li>To scale depth, the audit, novelty, and consistency phases already fan out one agent per
+      result/contribution/section, so larger papers automatically spawn more checkers.</li>
+  <li>Schemas at the top of the script (<code>AUDIT_SCHEMA</code>, <code>NOVELTY_SCHEMA</code>,
+      <code>REPAIR_SCHEMA</code>, <code>VERIFY_SCHEMA</code>) define the structured returns; tighten
+      them to enforce stricter outputs.</li>
+</ul>
+
+<h2>Cost and cautions</h2>
+<ul>
+  <li>This is a large fan-out. A full run can spawn dozens of agents (one per theorem, per
+      contribution, per section, plus repair and verify pipelines), so it consumes a substantial
+      token budget. Run it when a thorough pass is wanted, not for a quick check.</li>
+  <li>The apply phases edit the <code>.tex</code> and <code>.bib</code> in place. Keep the paper
+      under version control or a backup. The workflow never runs git itself.</li>
+  <li>The workflow requires the paper to compile at the start; the editor confirms a clean rebuild
+      (<code>EXIT 0</code>, no undefined references) after each apply step.</li>
+  <li>Web access is used in the novelty phase. Findings there should be spot-checked before
+      citing.</li>
+</ul>
+
+<footer>
+  Workflow: <code>research-phase-polish-thy</code> &middot; generated usage guide.
+  See <code>docs/wfs/research-phase-polish-thy.md</code> for the Markdown source.
+</footer>
+
+</div>
+</body>
+</html>

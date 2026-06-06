@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>research-phase-polish-exps — workflow manual</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a21; --ink:#e6e9ef; --muted:#9aa4b2;
+    --accent:#6ea8fe; --accent2:#5ed3a0; --line:#262c36; --code:#1b2029;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 96px}
+  h1{font-size:2rem;margin:0 0 .2em;letter-spacing:-.5px}
+  h2{font-size:1.3rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:1px solid var(--line)}
+  h3{font-size:1.05rem;margin:1.6em 0 .4em;color:var(--accent)}
+  p{color:var(--ink)}
+  .lede{color:var(--muted);font-size:1.08rem;margin-top:.4em}
+  code{background:var(--code);padding:.12em .4em;border-radius:5px;
+    font:13.5px/1.5 "SF Mono",Menlo,Consolas,monospace;color:#d7e3ff}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;overflow:auto;margin:1em 0}
+  pre code{background:none;padding:0;color:#cdd6e4}
+  table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.95rem}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  th{background:var(--panel);color:var(--accent2)}
+  ul{padding-left:1.2em}
+  li{margin:.3em 0}
+  .tag{display:inline-block;background:var(--panel);border:1px solid var(--line);
+    color:var(--accent2);border-radius:999px;padding:2px 12px;font-size:.8rem;margin-bottom:1.4em}
+  .phase{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:.8em 0}
+  .phase b{color:var(--accent)}
+  .note{background:#15201b;border:1px solid #1f3a2c;border-radius:8px;padding:12px 16px;margin:1em 0;color:#cfe9da}
+  .grid{display:grid;gap:.6em;margin:.6em 0}
+  .lens{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+  .lens b{color:var(--accent2)}
+  footer{margin-top:3em;padding-top:1.2em;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<span class="tag">multi-agent workflow</span>
+<h1>research-phase-polish-exps</h1>
+<p class="lede">Polish a research artifact whose storyline is already fixed. It improves prose, figures, surfaced and newly-planned evidence, and cross-artifact consistency, without ever changing the thesis or weakening a claim. It produces a prioritized, rubric-escalating feedback dossier that the author applies. It does not edit the paper itself.</p>
+
+<p>The workflow generalizes a recurring collaboration pattern. When the central story of a paper is settled, the remaining work is repeated rounds of the same kinds of feedback. Make the main body concise while the appendix stays detailed. Align and font-match figures. Surface evidence that already exists. Keep every number consistent across the paper. Plan the next experiment only when it adds a new message. Never settle at "good enough." This workflow encodes those instruction patterns as reusable lenses.</p>
+
+<h2>When to use</h2>
+<p>Use it when the storyline is fixed and you want to iterate on quality.</p>
+<ul>
+  <li>The thesis and section structure are settled and you are polishing, not re-arguing.</li>
+  <li>You want the main body trimmed while the appendix keeps the detail.</li>
+  <li>You want figures aligned, font-matched, and their encodings reconsidered.</li>
+  <li>You want to know what measured evidence is already on disk but not surfaced, and what new experiment would actually add a message.</li>
+  <li>You want a consistency and honesty audit so a quantity carries one value everywhere and no claim is overstated.</li>
+</ul>
+<p>Do not use it to draft a paper from scratch or to change the argument. It deliberately refuses any change that strengthens a claim.</p>
+
+<h2>How to invoke</h2>
+<p>The workflow is registered under <code>.claude/workflows/research-phase-polish-exps.js</code>.</p>
+<pre><code>Workflow({ name: "research-phase-polish-exps",
+           args: { path: "/abs/path/to/paper-dir" } })</code></pre>
+<p>Or by script path during iteration:</p>
+<pre><code>Workflow({ scriptPath: "/home/yjkim/cctt/.claude/workflows/research-phase-polish-exps.js",
+           args: { path: "/abs/path/to/paper-dir" } })</code></pre>
+<p>It runs in the background and notifies you on completion. Watch live progress with <code>/workflows</code>.</p>
+
+<h3>Arguments</h3>
+<p><code>args</code> may be a bare path string or an object.</p>
+<table>
+  <tr><th>field</th><th>required</th><th>meaning</th></tr>
+  <tr><td><code>path</code></td><td>yes</td><td>Absolute path to the artifact directory or a <code>.tex</code> file. The workflow finds the primary <code>.tex</code>, the <code>\appendix</code> boundary, and the results directory under it.</td></tr>
+  <tr><td><code>teamDir</code></td><td>no</td><td>Where the dossier and rubric are written. Defaults to <code>&lt;path&gt;/team</code>.</td></tr>
+  <tr><td><code>goldStyleGlob</code></td><td>no</td><td>Glob to the gold-standard writing-style examples used as the cadence target. Defaults to <code>../../writing_examples/*.tex</code>.</td></tr>
+</table>
+<p>A bare string is treated as <code>path</code>:</p>
+<pre><code>Workflow({ name: "research-phase-polish-exps",
+           args: "/home/yjkim/cctt/workspace/my-topic" })</code></pre>
+
+<h2>What it does, phase by phase</h2>
+<p>The workflow runs four phases. The first fans out readers, the middle two pipeline each lens through an adversarial check, and the last writes the dossier.</p>
+
+<div class="phase"><b>1. Map.</b> Five readers run in parallel and return structured maps: the section structure and verbose paragraphs, the figures and their issues, a preserve ledger of every number, citation, and hedge, the result data on disk and reusable pools, and the fixed storyline with its gold-standard style references.</div>
+
+<div class="phase"><b>2. Diagnose.</b> One critic per lens proposes concrete, surgical changes. Each proposal carries a verbatim locator, the drop-in change, the rationale, a preserve-checklist, and the reused instruction pattern it echoes.</div>
+
+<div class="phase"><b>3. Verify.</b> Every proposal is checked by an independent adversarial reviewer. It passes only if it preserves every number, citation, cross-reference, and hedge it touches, does not strengthen any claim, does not contradict the fixed storyline, and, for an experiment, earns its compute. The reviewer defaults to rejecting when uncertain.</div>
+
+<div class="phase"><b>4. Synthesize.</b> The team-lead merges the survivors into a prioritized dossier, adds an experiments-to-plan section and a verification checklist, lists the genuine forks that need a human decision, and escalates the rubric by one aspect or one raised bar.</div>
+
+<h3>The improvement lenses</h3>
+<p>The lenses are the reusable feedback patterns.</p>
+<div class="grid">
+  <div class="lens"><b>Succinctness.</b> Cut redundant restatement, filler, repeated hedges within a section, and long multi-clause sentences. Never delete a number, citation, or hedge to shorten.</div>
+  <div class="lens"><b>Main-versus-appendix division.</b> Move fine detail to the appendix and leave a one-line pointer.</div>
+  <div class="lens"><b>Figure layout, font, encoding.</b> Lay panels horizontally, fix in-figure versus caption font parity, reconsider the axis or encoding, expose a fitted parameter per series, merge figures that share a thread, promote a schematic figure into a measured one, and trim captions that restate the body.</div>
+  <div class="lens"><b>Evidence surfacing, no new compute.</b> Surface measured data already on disk that is only schematic or buried, while preserving the firm-versus-hedged framing.</div>
+  <div class="lens"><b>Experiment planning.</b> Reuse cached data before new generation, propose a new run only when it adds a new message, keep comparisons apples-to-apples, and specify implement-first then run on an idle GPU one job at a time.</div>
+  <div class="lens"><b>Consistency and honesty audit.</b> Make a quantity carry one value everywhere, disclose or align mismatched runs, and scope any overstatement.</div>
+  <div class="lens"><b>Style parity.</b> Match the gold-standard cadence, one sentence per source line, no structural punctuation, US English.</div>
+</div>
+
+<h2>Outputs</h2>
+<p>All outputs are written under <code>&lt;path&gt;/team</code> (or <code>teamDir</code>).</p>
+<ul>
+  <li><code>polish_feedback_round&lt;N&gt;.md</code> — the prioritized dossier for this round, grouped by lens, with an experiments-to-plan section, a verification checklist, and the open forks.</li>
+  <li><code>polish_rubric.md</code> — the active multi-aspect rubric with hard constraints, created on the first run and escalated each round.</li>
+  <li>The workflow's return value is a short summary with the round number, counts per lens, the top fixes, the planned experiments, and the open forks.</li>
+</ul>
+<div class="note"><b>Hard constraints, always enforced.</b> Numbers, citations, and hedges are preserved. No change ever strengthens a claim. Prose stays one sentence per source line.</div>
+
+<h2>Verification checklist</h2>
+<p>After applying the dossier's edits, the author runs the checks the dossier lists.</p>
+<pre><code>tectonic &lt;main.tex&gt; --keep-intermediates --synctex=0          # compiles
+grep -iE "Reference .* undefined|Citation .* undefined" &lt;main.log&gt;   # no broken refs
+pdftotext &lt;pdf&gt; - | grep -c '??'                               # zero unresolved refs
+python3 tools/eval_figure_quality.py --pdf &lt;pdf&gt;               # in-figure vs caption font parity</code></pre>
+
+<h2>Notes</h2>
+<ul>
+  <li>The workflow gives feedback. It does not edit substantive prose, matching the team-lead pattern where the author or teammates apply the changes.</li>
+  <li>It is conservative. A recap that is load-bearing for standalone readability in the abstract or conclusion is left alone, and an experiment that only reinforces what is already shown is rejected.</li>
+  <li>It is rerunnable. Each run reads the previous rubric and raises the bar, so repeated rounds keep improving the artifact rather than plateauing.</li>
+</ul>
+
+<footer>research-phase-polish-exps · workflow manual · generated for the CCTT thinktank</footer>
+</div>
+</body>
+</html>
