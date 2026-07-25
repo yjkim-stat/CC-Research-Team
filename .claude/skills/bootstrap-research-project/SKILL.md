@@ -28,7 +28,7 @@ Build exactly this layout. Confirm any folder whose role is ambiguous with the u
 ├── .claude/
 │   ├── agents/            # MINIMAL agent set for a technical dev project
 │   ├── skills/
-│   │   ├── wiki-dream-update/   # consolidate project progress into the wiki (dream mode)
+│   │   ├── wiki-update/         # consolidate project progress into the wiki
 │   │   └── ask-project/         # answer questions against the wiki + project state
 │   └── hooks/
 │       └── handoff.py          # PreCompact hook → docs/handoff/ per-session markdown
@@ -43,7 +43,7 @@ Build exactly this layout. Confirm any folder whose role is ambiguous with the u
 
 1. **Confirm scope and folder roles.** State the layout above back to the user and confirm the topic name and any folder whose purpose is not obvious. Do not guess folder roles.
 2. **Keep the agent set minimal.** Because this is a technical development project, create only the agents the adversarial loop actually needs. Start with a `team-lead` posture handled by the main agent, and add at most a small number of teammate roles such as a builder or explorer and a skeptic or critic. Do not clone the full writing-oriented roster unless the user asks. Prefer spawning several instances of a few roles in parallel over defining many roles.
-3. **Create the wiki-update skill (`wiki-dream-update`).** This skill consolidates accumulated session work into `wiki/` in what the user calls dream mode, meaning a proactive and generative consolidation pass that connects new findings to existing wiki pages and grows the knowledge base, rather than a literal transcript dump. Confirm the exact dream-mode semantics with the user if unclear, then encode them so future runs are reproducible.
+3. **Create the wiki-update skill (`wiki-update`).** This skill consolidates accumulated session work into `wiki/`, connecting new findings to existing wiki pages and growing the knowledge base, rather than dumping a literal transcript. Confirm the exact update behavior with the user if unclear, then encode it so future runs are reproducible.
 4. **Create the question skill (`ask-project`).** This skill answers a user question by reading `wiki/`, `docs/`, and `team/`, citing the source pages, and updating or flagging the wiki when it finds a gap.
 5. **Install the PreCompact handoff hook.** Reuse the existing `.claude/hooks/handoff.py` pattern in this repo, which already writes session file-change summaries into `docs/handoff/`. Wire it so that on PreCompact the whole session is organized into `docs/handoff/` as individual markdown files, one per session. Verify the hook is registered in settings and that it runs on Python standard library only.
 6. **Route resources.** Any markdown the user provides or anything found by web search goes into `docs/resources/`, one file per source, with a short provenance header.
@@ -61,7 +61,7 @@ Build exactly this layout. Confirm any folder whose role is ambiguous with the u
 
 - Creating a large agent roster for a technical project. Keep it minimal and lean on parallel instances.
 - Writing folders whose role the user has not confirmed.
-- Making the wiki-update skill a literal transcript dump instead of a consolidating dream-mode pass.
+- Making the wiki-update skill a literal transcript dump instead of a consolidating pass.
 - Committing `team/` snapshots or logs, which are gitignored on purpose.
 - Recording anything in `TOOL.md`, which only accepts user-approved tool entries per its own rules.
 
