@@ -46,6 +46,21 @@ tectonic -X compile <문서>.tex   # → <문서>.pdf
 
 `./TOOL.md`는 이 저장소에서 반복적으로 쓰는 도구·기능(LaTeX 컴파일, PDF 페이지 이미지 캡쳐 등)의 설치·실행 방법을 모아둔 파일이다. 담기는 내용은 **사용자가 직접 지시하고 명시적으로 승인한 것만**으로 한정한다. Agent(team-lead 포함)는 사용자가 이 파일에 넣으라고 직접 지시한 항목만 추가·수정하며, 스스로 판단해서 임의로 기록하지 않는다. 기존 항목을 수정·삭제할 때도 반드시 사용자에게 먼저 확인받는다. 자세한 쓰기 규칙은 `TOOL.md` 상단에 명시되어 있다.
 
+## Harness 기능 (자주 쓰는 프롬프트 → Skill · Agent)
+
+자주 반복하는 작업 흐름을 재사용 가능한 skill과 agent로 박아두었다. 작업 지시가 들어오면 상황과 목적에 맞는 것을 tool search로 찾아 활용한다. 세부 절차는 각 파일에 있으므로 여기서는 짧게만 설명한다.
+
+- **`bootstrap-research-project` (skill).** 새 연구 주제를 탐색·공부할 때 이 저장소 루트에 harness 골격을 세운다. 기술 개발 프로젝트를 전제로 agent를 최소한으로 만들고, wiki 업데이트 skill과 질문 skill을 추가하며, PreCompact hook으로 세션 내용을 `docs/handoff/`에 세션별 개별 markdown으로 정리하도록 배선하고, 아래 폴더 경로를 CLAUDE.md에 등록한다. 핵심은 여러 agent를 병렬 spawn하는 자기 개선형 adversarial feedback loop다.
+- **`adversarial-review-loop` (skill).** 논문을 reviewer 대 defender 적대적 루프로 근본적으로 개선한다. Team-lead가 중재자로서 hostile `reviewer`와 `defender`를 병렬 spawn해, reviewer는 점수를 어떻게든 낮추고 defender는 모든 반박을 appendix까지 동원해 미리 방어하며 점수를 올린다. 매 상태를 tectonic 컴파일과 snapshot으로 확인하고, overclaim 없이 main 본문을 압축(문단 첫 문장에 결론, margin·figure 조정 포함)한다. 통신은 `team/`에서 한다.
+- **Agent 역할.** `reviewer`(적대적 OpenReview 리뷰어), `defender`(반박·보강 담당)는 위 루프에서 쓰인다. 기존 `writer`·`critic`·`professor`·`judge`와 함께 `.claude/agents/`에 있다.
+
+### 폴더 경로 (bootstrap이 세우는 지식 축적 구조)
+
+- `wiki/` — 프로젝트 설명과 subtopic별 문서. 지속되는 지식 베이스.
+- `team/` — agent-team 통신·rubric·피드백 로그 (gitignore 대상).
+- `docs/handoff/` — 이전 세션 요약. PreCompact hook이 세션마다 개별 markdown으로 기록.
+- `docs/resources/` — 사용자가 제공한 markdown과 웹 검색 결과. 출처마다 파일 하나.
+
 ## Agent Team & Rubric
 
 ### Team 구조
