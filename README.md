@@ -1,8 +1,8 @@
 # CCTT — Claude Code Thinktank
 
-CCTT는 Claude Code 위에서 동작하는 **multi-agent 연구 협업 시스템**이다. 한 명의 사용자가 던진 연구 주제를 여러 AI teammate가 병렬로 파고들고, team-lead가 rubric으로 품질을 끌어올리며, 최종적으로 ICLR 형식의 논문 산출물까지 이어지도록 설계되었다. 이 저장소는 그 협업을 굴리기 위한 **규칙(`CLAUDE.md`), 역할 정의(agents), 작업 노하우(skills), 세션 인계 자동화(hook)** 를 담는다.
+CCTT는 Claude Code 위에서 동작하는 **multi-agent 연구 협업 시스템**이다. 한 명의 사용자가 던진 연구 주제를 여러 AI teammate가 병렬로 파고들고, team-lead가 rubric으로 품질을 끌어올리며, 최종적으로 논문 산출물까지 이어지도록 설계되었다. 이 저장소는 그 협업을 굴리기 위한 **규칙(`CLAUDE.md`), 역할 정의(agents), 작업 노하우(skills), 세션 인계 자동화(hook), 평가 질문 풀(`eval/`)** 을 담는다.
 
-> 실제 연구 산출물(`workspace/`, `team/`, `template/`, `writing_examples/`)은 `.gitignore`로 추적에서 제외된다. 이 저장소에 커밋되는 것은 **협업을 굴리는 골격**뿐이다.
+> **이 저장소 루트 자체가 하나의 연구 주제 workspace**다. 별도 `workspace/{topic}/` 하위 폴더를 만들지 않는다. 이 케이스에 주어지는 **실험 코드 폴더**와 **LaTeX writing 폴더**, 협업 로그(`team/`), `writing_examples/` 등 런타임 폴더는 `.gitignore`로 제외된다. 커밋되는 것은 **협업을 굴리는 골격(규칙·agent·skill·hook)과 축적되는 지식(`wiki/`, `docs/`, `eval/`)** 이다.
 
 > **처음 사용하시나요?** clone 직후 무엇부터 어떻게 하면 되는지는 [`HOW-TO-USE.md`](./HOW-TO-USE.md)에 단계별로 정리되어 있다. 사용법을 물으면 agent도 이 파일을 참조해 안내한다.
 
@@ -38,7 +38,7 @@ Teammate    Teammate    Teammate    Teammate   rubric 기반 피드백을 받고
 
 - **User** — 최상위 판정자. 모든 rubric과 산출물은 사용자 의도에 정렬된다.
 - **Team-lead** (main agent) — topic마다 multi-aspect rubric을 만들고 매 라운드 고도화한다. 산출물을 직접 substantively 수정하지 않고, rubric과 서면 피드백으로 teammate가 고치도록 유도한다.
-- **Teammates** (spawned agents) — task마다 여러 명을 병렬 spawn한다. `.claude/agents/`에 역할별 정의(`professor`, `critic`, `judge`, `writer`)를 둔다.
+- **Teammates** (spawned agents) — task마다 여러 명을 병렬 spawn한다. `.claude/agents/`에 역할별 정의(`writer`, `critic`, `professor`, `judge`, `reviewer`, `defender`)를 둔다.
 
 ---
 
@@ -50,32 +50,33 @@ Teammate    Teammate    Teammate    Teammate   rubric 기반 피드백을 받고
 2. **평가 기준** — 각 점수 수준에 대한 구체적 기준
 3. **점수 체계** — 명확한 anchor가 있는 수치 척도
 
-평가 축은 **실험적 완결성과 이론적 완결성**을 모두 포괄해야 한다. Rubric은 `./team/` 또는 해당 topic 폴더에 저장하여 모든 teammate가 참조한다.
+평가 축은 **실험적 완결성과 이론적 완결성**을 모두 포괄해야 한다. Rubric은 `./team/`에 저장하여 모든 teammate가 참조한다. 사용자가 지정한 문항 단위 평가 기준은 별도로 `eval/` 질문 풀에서 관리하며, `question-pool-review` skill이 이를 소비한다(아래 참조).
 
 ---
 
 ## 워크플로우
 
 ```
-새 주제 → workspace/{topic}/ 생성
+새 주제 → 이 저장소 루트를 주제 workspace로 사용
+   │        (bootstrap-research-project로 .claude 골격·폴더 구조 세팅)
    │
-   ├─ team-lead가 초기 rubric 작성
+   ├─ team-lead가 초기 rubric 작성 + eval/ 질문 풀 정리
    │
    ▼
 ┌─────────────────────────────────────────┐
-│  반복 루프 (topic 완결까지)               │
+│  반복 루프 (완결까지)                     │
 │                                          │
 │  1. teammate 병렬 spawn → 산출물 생산     │
-│  2. team-lead가 rubric으로 평가 + 피드백  │
+│  2. team-lead가 rubric·질문 풀로 평가·피드백 │
 │  3. teammate가 피드백 반영하여 수정       │
 │  4. rubric 고도화 (기준 상향/축 추가)     │
 │  5. 사용자 의도 정렬 점검                 │
 └─────────────────────────────────────────┘
    │
    ▼
-Writing 단계: template/ 를 topic 폴더에 복사
-   → iclr2026_conference.tex 에 정리
-   → research-paper-writing skill 활용
+Writing 단계: 주어진 LaTeX용 폴더의 기존 소스에 정리 (템플릿 새로 복사 없음)
+   → tectonic 컴파일 + 페이지 스냅샷으로 확인
+   → research-paper-writing · question-pool-review · adversarial-review-loop 활용
 ```
 
 완결 기준은 **실험 + 이론 + 사용자 의도 정렬**이 모두 충족되는 시점이다.
@@ -84,27 +85,36 @@ Writing 단계: template/ 를 topic 폴더에 복사
 
 ## 저장소 구조
 
+추적되는 골격과 지식 (커밋 대상):
+
 ```
 .
 ├── CLAUDE.md                  # 프로젝트 규칙 (팀/rubric/writing 규칙의 단일 출처)
 ├── README.md                  # 이 문서
-├── .gitignore                 # 연구 산출물·로컬 설정 제외
-└── .claude/
-    ├── agents/                # teammate 역할 정의 (professor, critic, judge, writer)
-    ├── hooks/
-    │   └── handoff.py         # 세션 인계 자동화 hook
-    └── skills/                # 작업 노하우 (아래 참조)
-        ├── research-paper-writing/
-        ├── extend-experimental-results/
-        └── iterative-revision-collaboration/
+├── HOW-TO-USE.md              # clone 직후 사용 안내
+├── TOOL.md                    # 사용자 승인 도구·기능 모음 (tectonic, 스냅샷 등)
+├── .gitignore
+├── .claude/
+│   ├── agents/                # writer, critic, professor, judge, reviewer, defender
+│   ├── hooks/handoff.py       # 세션 인계 자동화 hook
+│   ├── skills/                # 작업 노하우 (위 Skills 참조)
+│   └── workflows/             # research-phase-polish-thy, -exps
+├── eval/                      # 사용자 소유 평가 질문 풀 (criteria.md, questions/, CHANGELOG.md)
+├── wiki/                      # 프로젝트 설명과 subtopic 문서 (지식 베이스)
+└── docs/
+    ├── handoff/               # 세션별 인계 요약 (PreCompact hook이 기록)
+    └── resources/             # 사용자 제공 자료·웹 검색 결과 (출처별)
 ```
 
-추적에서 제외되는 작업 폴더(런타임에 생성):
+`wiki/`, `docs/handoff/`, `docs/resources/`는 `bootstrap-research-project`와 handoff hook이 런타임에 세워 채운다.
 
-- `workspace/{topic}/` — 연구 주제별 독립 workspace. **topic 간 엄격히 격리**되며 서로의 폴더에 접근하지 않는다.
-- `team/` — agent 협업의 의사소통, rubric, 피드백 자료.
-- `template/` — ICLR 2026 LaTeX 템플릿 원본. writing 시 topic 폴더로 복사하여 사용.
-- `writing_examples/` — 논문 writing 스타일 참고 예시 (ex1: CCG, ex2: VSGD).
+추적에서 제외되는 런타임 폴더 (`.gitignore`):
+
+- **주어진 LaTeX용 폴더**와 **GitHub용(실험 코드) 폴더** — 어느 것이 무엇인지는 사용자가 알려주며, 산출물(결과·figure)이 여기서 생성된다.
+- `team/` — agent 협업의 의사소통·rubric·피드백·PDF 스냅샷.
+- `writing_examples/` — 논문 writing 스타일 참고 예시.
+
+이 저장소는 별도 `workspace/{topic}/` 하위 폴더를 두지 않는다. 루트 자체가 하나의 주제 workspace이며, writing은 주어진 LaTeX 폴더의 기존 구조를 그대로 사용한다.
 
 ---
 
