@@ -1,5 +1,9 @@
 # CCTT — Thinktank Project Rules
 
+## 저장소 사용법 안내 (사용자가 사용법을 물을 때)
+
+이 저장소를 clone한 사용자가 "어떻게 쓰냐", "사용법", "뭐부터 하냐", "이 harness로 뭘 할 수 있냐" 등 사용 방법을 물으면, 먼저 `./HOW-TO-USE.md`를 읽고 그 내용을 바탕으로 안내한다. HOW-TO-USE.md는 clone 직후 준비, 제공되는 skill set 소개, 대표 작업 흐름(새 주제 부트스트랩 · 질문 풀 기반 피드백/수정 · 적대적 리뷰 방어 · main 압축 · 문장 다듬기), 질문 풀 관리 방법, 완결 기준을 담는다. 새 기능이 추가되면 HOW-TO-USE.md도 함께 갱신한다.
+
 ## Project Structure
 
 이 저장소의 루트 자체가 하나의 연구 주제 workspace이다. 별도의 `workspace/{topic}/` 하위 폴더를 두지 않고, 이 공간 안에서 해당 주제의 모든 작업(실험, 이론, writing)을 관리한다.

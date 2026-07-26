@@ -4,6 +4,8 @@ CCTT는 Claude Code 위에서 동작하는 **multi-agent 연구 협업 시스템
 
 > 실제 연구 산출물(`workspace/`, `team/`, `template/`, `writing_examples/`)은 `.gitignore`로 추적에서 제외된다. 이 저장소에 커밋되는 것은 **협업을 굴리는 골격**뿐이다.
 
+> **처음 사용하시나요?** clone 직후 무엇부터 어떻게 하면 되는지는 [`HOW-TO-USE.md`](./HOW-TO-USE.md)에 단계별로 정리되어 있다. 사용법을 물으면 agent도 이 파일을 참조해 안내한다.
+
 ---
 
 ## 설계 철학
@@ -108,13 +110,30 @@ Writing 단계: template/ 를 topic 폴더에 복사
 
 ## Skills
 
-`.claude/skills/`에는 반복되는 작업의 노하우가 재사용 가능한 형태로 정리되어 있다.
+`.claude/skills/`에는 반복되는 작업의 노하우가 재사용 가능한 형태로 정리되어 있다. 작업을 지시하면 team-lead가 상황에 맞는 것을 tool search로 찾아 쓴다. 각 skill의 언제·어떻게는 [`HOW-TO-USE.md`](./HOW-TO-USE.md)에 recipe로 정리되어 있다.
+
+**Harness 운영 skill**
+
+| Skill | 역할 |
+|-------|------|
+| **bootstrap-research-project** | 새 연구 주제를 세팅. `.claude` 골격 + wiki/team/docs/handoff/docs/resources 구조를 세우고, 최소 agent와 자기 개선형 adversarial loop를 배선한다. |
+| **question-pool-review** | `eval/`의 사용자 소유 질문 풀로 페이퍼를 점검하고, reviewer/defender로 각 문항을 채점해 **모든 문항이 한 스냅샷에서 동시에 pass될 때까지** 피드백·수정을 반복한다. |
+| **adversarial-review-loop** | hostile `reviewer`와 `defender`를 병렬로 세워 점수를 두고 debate하고, team-lead가 중재하며 overclaim 없이 근본 개선(근거·appendix 선제 방어·main 압축)을 반복한다. |
+
+**Writing skill**
 
 | Skill | 역할 |
 |-------|------|
 | **research-paper-writing** | ML/CV/NLP 논문을 reviewer-friendly 하게 작성·개선. Abstract/Introduction/Related Work/Method/Experiments/Conclusion의 구조·흐름·근거 정렬을 다룬다. |
 | **extend-experimental-results** | 결과를 부풀리지 않으면서 실험 섹션을 확장·강화. probe 무결성 점검, success regime 규정, depth-first 확장, mechanism ablation, 정직한 통계 강화, fidelity-ladder 보고를 적용한다. |
+| **polish-thy-main** | main을 load-bearing 핵심만 남기고, 부차·robustness·상세 유도를 appendix로 byte 단위 재배치하며 cross-reference와 figure 배치를 복구한다. |
 | **iterative-revision-collaboration** | 사용자가 짧은 방향 지시를 주고 여러 후보안을 기대하며 직접 수정권을 유지하는, team-lead/teammate rubric 기반의 문장 단위 반복 수정 협업. |
+
+대형 fan-out 자동화가 필요하면 `.claude/workflows/`의 `research-phase-polish-thy`(이론 감사·수리), `research-phase-polish-exps`(실험·figure·서술 개선)를 쓴다.
+
+### 평가 질문 풀 (`eval/`)
+
+`eval/`은 사용자가 지정한 평가 기준을 문항 단위로 쌓아 매 라운드 같은 기준으로 추적하는 **사용자 소유** 질문 은행이다. `criteria.md`(기준 인덱스), `questions/C*.md`(criterion별 문항), `CHANGELOG.md`(이력)로 구성되며 git으로 추적된다. agent는 풀을 직접 수정하지 않고 `team/qpool-candidates.md`에 후보만 제안하고, 사용자가 승인해 편입한다. `question-pool-review` skill이 이 풀을 소비한다. 관리 규칙은 [`eval/README.md`](./eval/README.md)를 본다.
 
 ---
 
