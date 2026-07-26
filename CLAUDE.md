@@ -52,7 +52,8 @@ tectonic -X compile <문서>.tex   # → <문서>.pdf
 
 - **`bootstrap-research-project` (skill).** 새 연구 주제를 탐색·공부할 때 이 저장소 루트에 harness 골격을 세운다. 기술 개발 프로젝트를 전제로 agent를 최소한으로 만들고, wiki 업데이트 skill과 질문 skill을 추가하며, PreCompact hook으로 세션 내용을 `docs/handoff/`에 세션별 개별 markdown으로 정리하도록 배선하고, 아래 폴더 경로를 CLAUDE.md에 등록한다. 핵심은 여러 agent를 병렬 spawn하는 자기 개선형 adversarial feedback loop다.
 - **`adversarial-review-loop` (skill).** 논문을 reviewer 대 defender 적대적 루프로 근본적으로 개선한다. Team-lead가 중재자로서 hostile `reviewer`와 `defender`를 병렬 spawn해, reviewer는 점수를 어떻게든 낮추고 defender는 모든 반박을 appendix까지 동원해 미리 방어하며 점수를 올린다. 매 상태를 tectonic 컴파일과 snapshot으로 확인하고, overclaim 없이 main 본문을 압축(문단 첫 문장에 결론, margin·figure 조정 포함)한다. 통신은 `team/`에서 한다.
-- **Agent 역할.** `reviewer`(적대적 OpenReview 리뷰어), `defender`(반박·보강 담당)는 위 루프에서 쓰인다. 기존 `writer`·`critic`·`professor`·`judge`와 함께 `.claude/agents/`에 있다.
+- **`question-pool-review` (skill).** `eval/`의 사용자 소유 질문 풀로 현재 페이퍼를 여러 기준에서 점검하고, reviewer/defender를 spawn해 각 문항을 `pass`/`partial`/`fail`로 판정한다. 완결 게이트는 점수 평균이 아니라, 하나의 컴파일·스냅샷 상태에서 **모든 문항이 동시에 pass**가 되는 것이다. 새 지적사항은 agent가 풀을 직접 고치지 않고 `team/qpool-candidates.md`에 후보로 제안하며, 사용자가 승인해 풀에 편입한다.
+- **Agent 역할.** `reviewer`(적대적 OpenReview 리뷰어), `defender`(반박·보강 담당)는 위 루프들에서 쓰인다. 기존 `writer`·`critic`·`professor`·`judge`와 함께 `.claude/agents/`에 있다.
 
 ### 폴더 경로 (bootstrap이 세우는 지식 축적 구조)
 
@@ -60,6 +61,7 @@ tectonic -X compile <문서>.tex   # → <문서>.pdf
 - `team/` — agent-team 통신·rubric·피드백 로그 (gitignore 대상).
 - `docs/handoff/` — 이전 세션 요약. PreCompact hook이 세션마다 개별 markdown으로 기록.
 - `docs/resources/` — 사용자가 제공한 markdown과 웹 검색 결과. 출처마다 파일 하나.
+- `eval/` — 사용자 소유 평가 질문 풀. `criteria.md`(기준 인덱스), `questions/`(criterion별 문항), `CHANGELOG.md`(변경 이력). git 추적되며 agent는 직접 수정하지 않고 후보만 제안한다.
 
 ## Agent Team & Rubric
 
